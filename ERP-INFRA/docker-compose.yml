@@ -1,0 +1,82 @@
+version: "3.9"
+
+services:
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    environment:
+      - SA_PASSWORD=${DB_PASSWORD}
+      - ACCEPT_EULA=Y
+    ports:
+      - "1433:1433"
+    volumes: 
+      - sql_data:/var/opt/mssql
+
+  gestionprojet-api:
+    build: ../GestionProjet
+    image: gestionprojet-service
+    ports:
+      - "5001:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - sqlserver
+
+  rh-api:
+    build: ../ModuleRH
+    image: rh-service
+    ports:
+      - "5002:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - sqlserver
+
+  crm-api:
+    build: ../ModuleCRM
+    image: crm-service
+    ports:
+      - "5003:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - sqlserver
+  
+  helpdesk-timesheet-api:
+    build: ../ModuleHelpDesk-Timesheet 
+    image: helpdesktimesheet-service #the image name
+    ports:
+      - "5004:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - sqlserver
+
+  bi-api:
+    build: ../ModuleBI
+    image: bi-service
+    ports:
+      - "5005:8080" # 5005 sur le PC → 8080 dans le container
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on: #This means: Docker starts SQL Server first then the services
+      - sqlserver 
+      
+  helpdesk-api:
+    build: ../ModuleHelpdesk
+    image: helpdesk-service
+    ports:
+      - "5006:8080" # 5005 sur le PC → 8080 dans le container
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on: #This means: Docker starts SQL Server first then the services
+      - sqlserver 
+
+  erp-frontend:
+    build: ../ERP-Frontend
+    image: erp-frontend
+    ports:
+      - "3000:5173" # 5001 sur ton PC → 8080 dans le container
+volumes: 
+  sql_data:
