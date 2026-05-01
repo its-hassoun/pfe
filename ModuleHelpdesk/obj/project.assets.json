@@ -4830,11 +4830,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Admin\\Desktop\\stage 2.0\\ModuleHelpdesk\\ModuleHelpdesk.csproj",
+      "projectUniqueName": "C:\\Users\\Admin\\Desktop\\wasssim\\ModuleHelpdesk\\ModuleHelpdesk.csproj",
       "projectName": "ModuleHelpdesk",
-      "projectPath": "C:\\Users\\Admin\\Desktop\\stage 2.0\\ModuleHelpdesk\\ModuleHelpdesk.csproj",
+      "projectPath": "C:\\Users\\Admin\\Desktop\\wasssim\\ModuleHelpdesk\\ModuleHelpdesk.csproj",
       "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Admin\\Desktop\\stage 2.0\\ModuleHelpdesk\\obj\\",
+      "outputPath": "C:\\Users\\Admin\\Desktop\\wasssim\\ModuleHelpdesk\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config"
