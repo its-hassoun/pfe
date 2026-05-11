@@ -10,15 +10,28 @@ import {
   Building,
   Users,
   Calendar,
-  BookOpen
+  BookOpen,
+  Wrench,
+  BellRing
 } from 'lucide-react';
-import type { User } from '../../types';
 import { Avatar } from '../ui/Avatar';
+import type { AuthUser, Role } from '../../types/auth';
 
 interface SidebarProps {
-  currentUser: User;
+  currentUser: AuthUser;
   isMobileOpen?: boolean;
   onLogout?: () => void;
+}
+
+const ROLE_ALIASES: Record<string, Role> = {
+  admin: 'Admin',
+  agent: 'Agent',
+  client: 'Client',
+  subclient: 'SubClient',
+};
+
+function normalizeRole(r: string): Role {
+  return ROLE_ALIASES[r.toLowerCase()] ?? (r as Role);
 }
 
 export function Sidebar({
@@ -28,117 +41,27 @@ export function Sidebar({
 }: SidebarProps) {
   const location = useLocation();
   const currentPath = location.pathname;
+  const role = normalizeRole(currentUser.role);
 
   const allNavItems = [
-    {
-      id: 'dashboard',
-      path: '/dashboard',
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      section: 'HELPDESK',
-      roles: ['agent', 'Admin']
-    },
-    {
-      id: 'tickets',
-      path: '/tickets',
-      label: 'All Tickets',
-      icon: Ticket,
-      section: 'HELPDESK',
-      roles: ['agent', 'Admin']
-    },
-    {
-      id: 'my-tickets',
-      path: '/my-tickets',
-      label: 'My Tickets',
-      icon: ClipboardList,
-      section: 'HELPDESK',
-      roles: ['agent']
-    },
-    {
-      id: 'knowledge',
-      path: '/knowledge',
-      label: 'Knowledge Base',
-      icon: BookOpen,
-      section: 'HELPDESK',
-      roles: ['agent', 'Admin']
-    },
-    {
-      id: 'create-ticket',
-      path: '/create-ticket',
-      label: 'Create Ticket',
-      icon: PlusCircle,
-      section: 'HELPDESK',
-      roles: ['agent', 'Admin', 'subclient']
-    },
-    {
-      id: 'timesheets',
-      path: '/timesheets',
-      label: 'Timesheet and Calendar',
-      icon: Calendar,
-      section: 'TIMESHEETS',
-      roles: ['agent', 'Admin']
-    },
-    {
-      id: 'validation',
-      path: '/validation',
-      label: 'Validation',
-      icon: CheckSquare,
-      section: 'TIMESHEETS',
-      roles: ['Admin']
-    },
-    {
-      id: 'all-clients',
-      path: '/clients',
-      label: 'All Clients',
-      icon: Building,
-      section: 'ADMIN',
-      roles: ['Admin']
-    },
-    {
-      id: 'all-agents',
-      path: '/agents',
-      label: 'All Agents',
-      icon: Users,
-      section: 'ADMIN',
-      roles: ['Admin']
-    },
-    {
-      id: 'client-dashboard',
-      path: '/company',
-      label: 'Company Overview',
-      icon: Building,
-      section: 'CLIENT',
-      roles: ['client']
-    },
-    {
-      id: 'client-tickets',
-      path: '/company-tickets',
-      label: 'All Tickets',
-      icon: Ticket,
-      section: 'CLIENT',
-      roles: ['client']
-    },
-    {
-      id: 'subclient-dashboard',
-      path: '/my-dashboard',
-      label: 'My Dashboard',
-      icon: LayoutDashboard,
-      section: 'SUBCLIENT',
-      roles: ['subclient']
-    },
-    {
-      id: 'subclient-my-tickets',
-      path: '/my-tickets',
-      label: 'My Tickets',
-      icon: Ticket,
-      section: 'SUBCLIENT',
-      roles: ['subclient']
-    }
+    { id: 'dashboard', path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'HELPDESK', roles: ['Agent', 'Admin'] as Role[] },
+    { id: 'tickets', path: '/tickets', label: 'All Tickets', icon: Ticket, section: 'HELPDESK', roles: ['Agent', 'Admin'] as Role[] },
+    { id: 'my-tickets', path: '/my-tickets', label: 'My Tickets', icon: ClipboardList, section: 'HELPDESK', roles: ['Agent'] as Role[] },
+    { id: 'interventions', path: '/interventions', label: 'Interventions', icon: Wrench, section: 'HELPDESK', roles: ['Agent', 'Admin', 'Client', 'SubClient'] as Role[] },
+    { id: 'knowledge', path: '/knowledge', label: 'Knowledge Base', icon: BookOpen, section: 'HELPDESK', roles: ['Agent', 'Admin'] as Role[] },
+    { id: 'create-ticket', path: '/create-ticket', label: 'Create Ticket', icon: PlusCircle, section: 'HELPDESK', roles: ['Agent', 'Admin', 'SubClient'] as Role[] },
+    { id: 'notifications', path: '/notifications', label: 'Notifications', icon: BellRing, section: 'HELPDESK', roles: ['Agent', 'Admin', 'Client', 'SubClient'] as Role[] },
+    { id: 'timesheets', path: '/timesheets', label: 'Timesheet and Calendar', icon: Calendar, section: 'TIMESHEETS', roles: ['Agent', 'Admin'] as Role[] },
+    { id: 'validation', path: '/validation', label: 'Validation', icon: CheckSquare, section: 'TIMESHEETS', roles: ['Admin'] as Role[] },
+    { id: 'all-clients', path: '/clients', label: 'All Clients', icon: Building, section: 'ADMIN', roles: ['Admin'] as Role[] },
+    { id: 'all-agents', path: '/agents', label: 'All Agents', icon: Users, section: 'ADMIN', roles: ['Admin'] as Role[] },
+    { id: 'client-dashboard', path: '/company', label: 'Company Overview', icon: Building, section: 'CLIENT', roles: ['Client'] as Role[] },
+    { id: 'client-tickets', path: '/company-tickets', label: 'All Tickets', icon: Ticket, section: 'CLIENT', roles: ['Client'] as Role[] },
+    { id: 'subclient-dashboard', path: '/my-dashboard', label: 'My Dashboard', icon: LayoutDashboard, section: 'SUBCLIENT', roles: ['SubClient'] as Role[] },
+    { id: 'subclient-my-tickets', path: '/my-tickets', label: 'My Tickets', icon: Ticket, section: 'SUBCLIENT', roles: ['SubClient'] as Role[] },
   ];
 
-  const navItems = allNavItems.filter((item) =>
-    item.roles.includes(currentUser.role)
-  );
+  const navItems = allNavItems.filter((item) => item.roles.includes(role));
 
   const renderNavItem = (item: (typeof navItems)[0]) => {
     const isActive = currentPath === item.path || currentPath.startsWith(item.path + '/');
@@ -153,26 +76,20 @@ export function Sidebar({
         }`}
       >
         <item.icon
-          className={`h-5 w-5 mr-3 ${
-            isActive ? 'text-[#ef7c21]' : 'text-slate-400 group-hover:text-[#ef7c21]'
-          }`}
+          className={`h-5 w-5 mr-3 ${isActive ? 'text-[#ef7c21]' : 'text-slate-400'}`}
         />
         {item.label}
       </Link>
     );
   };
 
-  const handleLogout = () => {
-    if (onLogout) {
-      onLogout();
-    }
-  };
-
-  const helpdeskItems = navItems.filter((i) => i.section === 'HELPDESK');
-  const timesheetItems = navItems.filter((i) => i.section === 'TIMESHEETS');
-  const adminItems = navItems.filter((i) => i.section === 'ADMIN');
-  const clientItems = navItems.filter((i) => i.section === 'CLIENT');
-  const subclientItems = navItems.filter((i) => i.section === 'SUBCLIENT');
+  const sections: { key: string; label: string }[] = [
+    { key: 'HELPDESK', label: 'Helpdesk' },
+    { key: 'TIMESHEETS', label: 'Timesheets' },
+    { key: 'ADMIN', label: 'Administration' },
+    { key: 'CLIENT', label: 'Company' },
+    { key: 'SUBCLIENT', label: 'Support' },
+  ];
 
   return (
     <aside
@@ -190,70 +107,37 @@ export function Sidebar({
       </div>
 
       <nav className="flex-1 py-6 overflow-y-auto">
-        {helpdeskItems.length > 0 && (
-          <div className="mb-4">
-            <div className="px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Helpdesk
+        {sections.map((s) => {
+          const items = navItems.filter((i) => i.section === s.key);
+          if (items.length === 0) return null;
+          return (
+            <div key={s.key} className="mb-4">
+              <div className="px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                {s.label}
+              </div>
+              {items.map(renderNavItem)}
             </div>
-            {helpdeskItems.map(renderNavItem)}
-          </div>
-        )}
-
-        {timesheetItems.length > 0 && (
-          <div className="mb-4">
-            <div className="px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Timesheets
-            </div>
-            {timesheetItems.map(renderNavItem)}
-          </div>
-        )}
-
-        {adminItems.length > 0 && (
-          <div className="mb-4">
-            <div className="px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Administration
-            </div>
-            {adminItems.map(renderNavItem)}
-          </div>
-        )}
-
-        {clientItems.length > 0 && (
-          <div className="mb-4">
-            <div className="px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Company
-            </div>
-            {clientItems.map(renderNavItem)}
-          </div>
-        )}
-
-        {subclientItems.length > 0 && (
-          <div className="mb-4">
-            <div className="px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Support
-            </div>
-            {subclientItems.map(renderNavItem)}
-          </div>
-        )}
+          );
+        })}
       </nav>
 
       <div className="p-4 border-t border-slate-200">
         <div className="flex items-center p-2 rounded-lg bg-slate-50">
           <Avatar
-            initials={currentUser.avatarInitials}
-            color={currentUser.avatarColor}
+            initials={currentUser.avatarInitials || (currentUser.name ?? currentUser.email).slice(0, 2)}
+            color="bg-[#ef7c21]"
             size="sm"
           />
           <div className="ml-3 flex-1 overflow-hidden">
             <p className="text-sm font-medium text-slate-900 truncate">
-              {currentUser.name}
+              {currentUser.name || currentUser.email}
             </p>
-            <p className="text-xs text-slate-500 truncate capitalize">
-              {currentUser.role} • {currentUser.team}
-            </p>
+            <p className="text-xs text-slate-500 truncate capitalize">{role}</p>
           </div>
           <button
-            onClick={handleLogout}
+            onClick={onLogout}
             className="text-slate-400 hover:text-[#ef7c21] ml-2 transition-colors duration-200"
+            aria-label="Se déconnecter"
           >
             <LogOut className="h-4 w-4" />
           </button>

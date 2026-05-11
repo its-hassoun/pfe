@@ -9,15 +9,20 @@ export default defineConfig({
     hmr: {
       clientPort: 3000,
     },
-  proxy: {
-  '/api/helpdesk': {
-    target: 'http://host.docker.internal:5006',
-    changeOrigin: true,
+    proxy: {
+      '/api/helpdesk': {
+        target: 'http://host.docker.internal:5006',
+        changeOrigin: true,
+      },
+      '/api/timesheet': {
+        target: 'http://host.docker.internal:5004',
+        changeOrigin: true,
+      },
+      '/hubs': {
+        target: 'http://host.docker.internal:5006',
+        changeOrigin: true,
+        ws: true,
+      },
+    },
   },
-  '/api/timesheet': {
-    target: 'http://host.docker.internal:5004',
-    changeOrigin: true,
-  }
-}
-  }
 })

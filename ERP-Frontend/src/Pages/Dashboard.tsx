@@ -1,78 +1,72 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { StatusBadge } from '../components/ui/StatusBadge';
-import type { Ticket, User } from '../types';
+import { dashboardService } from '../Services/helpdesk/dashboardService';
+import type { DashboardStats, RecentTickets } from '../types/dashboard';
+import { useAuth } from '../contexts/AuthContext';
 import {
   Ticket as TicketIcon,
   Clock,
   CheckCircle,
   AlertCircle,
   Plus,
-  CirclePause
+  CirclePause,
+  Loader2,
+  Wrench,
 } from 'lucide-react';
 
-interface DashboardProps {
-  tickets: Ticket[];
-  currentUser: User;
-}
-
-export function Dashboard({ tickets, currentUser }: DashboardProps) {
+export function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recent, setRecent] = useState<RecentTickets>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  const visibleTickets = tickets.filter(() => {
-    if (currentUser.role === 'manager') return true;
-    return true;
-  });
+  const fetchAll = () => {
+    setLoading(true);
+    setError(false);
+    Promise.all([dashboardService.stats(), dashboardService.recentTickets(5)])
+      .then(([s, r]) => { setStats(s); setRecent(r); })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  };
 
-  const stats = [
-    {
-      label: 'Total Tickets',
-      value: visibleTickets.length,
-      icon: TicketIcon,
-      color: 'bg-blue-500'
-    },
-    {
-      label: 'Fresh',
-      value: visibleTickets.filter((t) => t.status === 'fresh').length,
-      icon: AlertCircle,
-      color: 'bg-cyan-500'
-    },
-    {
-      label: 'Pending',
-      value: visibleTickets.filter((t) => t.status === 'pending').length,
-      icon: Clock,
-      color: 'bg-amber-500'
-    },
-    {
-      label: 'Paused',
-      value: visibleTickets.filter((t) => t.status === 'paused').length,
-      icon: CirclePause,
-      color: 'bg-purple-500'
-    },
-    {
-      label: 'Closed',
-      value: visibleTickets.filter((t) => t.status === 'closed').length,
-      icon: CheckCircle,
-      color: 'bg-green-500'
-    }
+  useEffect(fetchAll, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-[#ef7c21]" />
+        <span className="ml-3 text-slate-500 font-medium">Chargement…</span>
+      </div>
+    );
+  }
+  if (error || !stats) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <p className="text-slate-500 font-medium">Impossible de charger le tableau de bord.</p>
+        <Button onClick={fetchAll} variant="outline">Réessayer</Button>
+      </div>
+    );
+  }
+
+  const cards = [
+    { label: 'Total Tickets', value: stats.tickets.total, icon: TicketIcon, color: 'bg-blue-500' },
+    { label: 'Fresh', value: stats.tickets.nouveau, icon: AlertCircle, color: 'bg-cyan-500' },
+    { label: 'Pending', value: stats.tickets.enAttente + stats.tickets.ouvert, icon: Clock, color: 'bg-amber-500' },
+    { label: 'Paused', value: stats.tickets.enPause, icon: CirclePause, color: 'bg-purple-500' },
+    { label: 'Closed', value: stats.tickets.clos, icon: CheckCircle, color: 'bg-green-500' },
+    { label: 'Interventions', value: stats.interventions.total, icon: Wrench, color: 'bg-orange-500' },
   ];
-
-  const recentTickets = [...visibleTickets]
-    .sort(
-      (a, b) =>
-        new Date(b.datePosted).getTime() - new Date(a.datePosted).getTime()
-    )
-    .slice(0, 5);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-lg font-medium text-slate-900">Overview</h2>
-          <p className="text-sm text-slate-500">
-            Welcome back, {currentUser.name}
-          </p>
+          <p className="text-sm text-slate-500">Welcome back, {user?.name ?? user?.email}</p>
         </div>
         <Button onClick={() => navigate('/create-ticket')}>
           <Plus className="h-4 w-4 mr-2" />
@@ -80,13 +74,11 @@ export function Dashboard({ tickets, currentUser }: DashboardProps) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {stats.map((stat) => (
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {cards.map((stat) => (
           <Card key={stat.label} className="flex items-center p-4">
             <div className={`p-3 rounded-lg ${stat.color} bg-opacity-10 mr-4`}>
-              <stat.icon
-                className={`h-6 w-6 ${stat.color.replace('bg-', 'text-')}`}
-              />
+              <stat.icon className={`h-6 w-6 ${stat.color.replace('bg-', 'text-')}`} />
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500">{stat.label}</p>
@@ -99,65 +91,39 @@ export function Dashboard({ tickets, currentUser }: DashboardProps) {
       <Card className="overflow-hidden" noPadding>
         <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-white">
           <h3 className="font-semibold text-slate-900">Recent Tickets</h3>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/tickets')}>
-            View All
-          </Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/tickets')}>View All</Button>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Subject
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Requester
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Date
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Sujet</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Client</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Statut</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
-              {recentTickets.map((ticket) => (
+              {recent.map((t) => (
                 <tr
-                  key={ticket.id}
-                  className="hover:bg-slate-50 transition-colors cursor-pointer"
-                  onClick={() => navigate(`/tickets/${ticket.id}`)}
+                  key={t.id}
+                  className="hover:bg-slate-50 cursor-pointer"
+                  onClick={() => navigate(`/tickets/${t.id}`)}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-slate-900">
-                      {ticket.title}
-                    </div>
-                    <div className="text-xs text-slate-500">{ticket.id}</div>
+                    <div className="text-sm font-medium text-slate-900">{t.titre}</div>
+                    <div className="text-xs text-slate-500">#{t.id}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-slate-900">
-                      {ticket.clientName}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      {ticket.clientEmail}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <StatusBadge status={ticket.status} />
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700">{t.clientId}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700">{t.statut}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                    {new Date(ticket.datePosted).toLocaleDateString()}
+                    {new Date(t.dateCreation).toLocaleDateString('fr-FR')}
                   </td>
                 </tr>
               ))}
-              {recentTickets.length === 0 && (
+              {recent.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="px-6 py-12 text-center text-slate-500"
-                  >
-                    No tickets found.
-                  </td>
+                  <td colSpan={4} className="px-6 py-12 text-center text-slate-500">Aucun ticket récent.</td>
                 </tr>
               )}
             </tbody>

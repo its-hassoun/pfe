@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { User } from '../../../types';
+import type { AuthUser } from '../../../types/auth';
 import type { Ticket } from '../../../types/helpdesk';
 import { ticketService } from '../../../Services/helpdesk/ticketService';
 import { Card } from '../../../components/ui/Card';
@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 interface TicketsListProps {
-  currentUser: User;
+  currentUser: AuthUser;
   mode?: 'all' | 'my-tickets';
 }
 

@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ModuleHelpDesk.Authorization;
 using ModuleHelpDesk.Models;
 using ModuleHelpDesk.Repositories;
 
 namespace ModuleHelpDesk.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/helpdesk/[controller]")]
     public class InterventionsController : ControllerBase
     {
@@ -15,6 +18,7 @@ namespace ModuleHelpDesk.Controllers
         public async Task<IActionResult> GetInterventions() => Ok(await _repo.GetAllInterventionsAsync());
 
         [HttpPost]
+        [Authorize(Roles = Roles.Staff)]
         public async Task<IActionResult> Create(Intervention intervention)
         {
             var created = await _repo.CreateInterventionAsync(intervention);
@@ -37,6 +41,7 @@ public async Task<IActionResult> GetByCategorie(int categorie)
 }
 
 [HttpPut("{id}")]
+[Authorize(Roles = Roles.Staff)]
 public async Task<IActionResult> Update(int id, Intervention intervention)
 {
     if (id != intervention.Id) return BadRequest("ID mismatch");
@@ -46,6 +51,7 @@ public async Task<IActionResult> Update(int id, Intervention intervention)
 }
 
 [HttpDelete("{id}")]
+[Authorize(Roles = Roles.Admin)]
 public async Task<IActionResult> Delete(int id)
 {
     await _repo.DeleteInterventionAsync(id);

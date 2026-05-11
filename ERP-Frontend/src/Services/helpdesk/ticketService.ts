@@ -38,6 +38,12 @@ export const ticketService = {
   transfer: (id: number, newAgentId: string): Promise<{ message: string }> =>
     helpdeskApi.put(`/tickets/${id}/transfer`, newAgentId).then(r => r.data),
 
+  assign: (id: number, agentId: string): Promise<void> =>
+    helpdeskApi.patch(`/tickets/${id}/assign`, { agentId }).then(() => undefined),
+
+  changePriority: (id: number, priority: PrioriteTicket): Promise<void> =>
+    helpdeskApi.patch(`/tickets/${id}/priority`, { priority }).then(() => undefined),
+
   getFacturation: (clientId: string, start: Date, end: Date): Promise<FacturationResponse> =>
     helpdeskApi.get('/tickets/facturation', {
       params: {

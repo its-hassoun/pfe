@@ -1,5 +1,5 @@
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { LoginPage } from './Pages/LoginPage';
 import { Dashboard } from './Pages/Dashboard';
@@ -15,348 +15,190 @@ import { ClientDetail } from './Pages/Helpdesk/Ticket/ClientDetail';
 import { Knowledge } from './Pages/Helpdesk/Knowledge/Knowledge';
 import { ClientDashboard } from './Pages/Helpdesk/Ticket/ClientDashboard';
 import { SubClientDashboard } from './Pages/Helpdesk/Ticket/SubClientDashboard';
-import { USERS, TICKETS, TIMESHEETS, PROJECTS } from './data/mockData';
-import type { Ticket, User, TicketStatus, TimesheetTask, Timesheet } from './types';
+import { InterventionsList } from './Pages/Helpdesk/Intervention/InterventionsList';
+import { InterventionDetail } from './Pages/Helpdesk/Intervention/InterventionDetail';
+import { NotificationsPage } from './Pages/Notifications';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { RequireAuth } from './components/auth/RequireAuth';
+import type { Timesheet, TimesheetTask, Project } from './types';
 
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User>(USERS[0]);
-  const [tickets, setTickets] = useState<Ticket[]>(TICKETS);
-  const [timesheets, setTimesheets] = useState<Timesheet[]>(TIMESHEETS);
+function getPageTitle(pathname: string) {
+  if (pathname === '/dashboard') return 'Dashboard';
+  if (pathname === '/tickets') return 'All Tickets';
+  if (pathname === '/my-tickets') return 'My Tickets';
+  if (pathname.startsWith('/tickets/')) return 'Ticket Details';
+  if (pathname === '/create-ticket') return 'Create Ticket';
+  if (pathname === '/timesheets') return 'My Timesheet';
+  if (pathname === '/validation') return 'Timesheet Validation';
+  if (pathname === '/agents') return 'All Agents';
+  if (pathname.startsWith('/agents/')) return 'Agent Details';
+  if (pathname === '/clients') return 'All Clients';
+  if (pathname.startsWith('/clients/')) return 'Client Details';
+  if (pathname === '/knowledge') return 'Knowledge Base';
+  if (pathname === '/company') return 'Company Overview';
+  if (pathname === '/my-dashboard') return 'My Dashboard';
+  if (pathname === '/interventions') return 'Interventions';
+  if (pathname.startsWith('/interventions/')) return 'Intervention Details';
+  if (pathname === '/notifications') return 'Notifications';
+  return 'HelpDesk Pro';
+}
 
-  const handleLogin = (user: User) => {
-    setCurrentUser(user);
-    setIsAuthenticated(true);
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-  };
-
-  const handleCreateTicket = (newTicketData: any) => {
-    const newTicket: Ticket = {
-      ...newTicketData,
-      id: `T-${1000 + tickets.length + 1}`,
-      datePosted: new Date().toISOString(),
-      status: 'fresh',
-      userId: null,
-      clientId:
-        currentUser.role === 'subclient'
-          ? currentUser.clientCompanyId || 'c-new'
-          : 'c-new',
-      clientEmail: currentUser.email,
-      clientName: currentUser.name,
-      subClientUserId:
-        currentUser.role === 'subclient' ? currentUser.id : undefined
-    };
-    setTickets([newTicket, ...tickets]);
-  };
-
-  const handleUpdateTicketStatus = (
-    ticketId: string,
-    status: TicketStatus,
-    userId?: string
-  ) => {
-    setTickets(
-      tickets.map((t) => {
-        if (t.id === ticketId) {
-          return {
-            ...t,
-            status,
-            userId: userId || t.userId
-          };
-        }
-        return t;
-      })
-    );
-  };
-
-  // Timesheet handlers
-  const handleSaveTask = (task: TimesheetTask) => {
-    setTimesheets(
-      timesheets.map((ts) => {
-        if (ts.userId === currentUser.id) {
-          return {
-            ...ts,
-            tasks: [...ts.tasks, task],
-            totalHours: ts.totalHours + task.hours
-          };
-        }
-        return ts;
-      })
-    );
-  };
-
-  const handleDeleteTask = (taskId: string) => {
-    setTimesheets(
-      timesheets.map((ts) => {
-        if (ts.userId === currentUser.id) {
-          const taskToDelete = ts.tasks.find((t) => t.id === taskId);
-          return {
-            ...ts,
-            tasks: ts.tasks.filter((t) => t.id !== taskId),
-            totalHours: ts.totalHours - (taskToDelete?.hours || 0)
-          };
-        }
-        return ts;
-      })
-    );
-  };
-
-  const handleSubmitTimesheet = () => {
-    setTimesheets(
-      timesheets.map((ts) => {
-        if (ts.userId === currentUser.id && ts.status === 'draft') {
-          return { ...ts, status: 'submitted' };
-        }
-        return ts;
-      })
-    );
-  };
-
-  const handleValidateTimesheet = (timesheetId: string) => {
-    setTimesheets(
-      timesheets.map((ts) => {
-        if (ts.id === timesheetId) {
-          return { ...ts, status: 'validated', validatedBy: currentUser.id };
-        }
-        return ts;
-      })
-    );
-  };
-
-  const handleRejectTimesheet = (timesheetId: string) => {
-    setTimesheets(
-      timesheets.map((ts) => {
-        if (ts.id === timesheetId) {
-          return { ...ts, status: 'rejected' };
-        }
-        return ts;
-      })
-    );
-  };
-
-  const handleCloseTicketWithRating = (ticketId: string, rating: number, comment: string) => {
-    setTickets(
-      tickets.map((t) => {
-        if (t.id === ticketId) {
-          return { ...t, status: 'archived' as TicketStatus, rating, feedback: comment };
-        }
-        return t;
-      })
-    );
-  };
-
-  // Helper functions
-  const getCurrentUserTimesheet = () => {
-    return timesheets.find((ts) => ts.userId === currentUser.id);
-  };
-
-  const getAgents = () => {
-    return USERS.filter((u) => u.role === 'agent' || u.role === 'Admin');
-  };
-
-  const getClients = () => {
-    return USERS.filter((u) => u.role === 'client');
-  };
-
-  const getSubclients = (clientId?: string) => {
-    if (clientId) {
-      return USERS.filter((u) => u.role === 'subclient' && u.clientCompanyId === clientId);
-    }
-    return USERS.filter((u) => u.role === 'subclient' && u.clientCompanyId === currentUser.id);
-  };
-
-  const getClientTickets = () => {
-    return tickets.filter((t) => t.clientId === currentUser.id);
-  };
-
-  const getSubclientTickets = () => {
-    return tickets.filter((t) => t.subClientUserId === currentUser.id);
-  };
-
-  const getPageTitle = (pathname: string) => {
-    if (pathname === '/dashboard') return 'Dashboard';
-    if (pathname === '/tickets') return 'All Tickets';
-    if (pathname === '/my-tickets') return 'My Tickets';
-    if (pathname.startsWith('/tickets/')) return 'Ticket Details';
-    if (pathname === '/create-ticket') return 'Create Ticket';
-    if (pathname === '/timesheets') return 'My Timesheet';
-    if (pathname === '/validation') return 'Timesheet Validation';
-    if (pathname === '/agents') return 'All Agents';
-    if (pathname === '/clients') return 'All Clients';
-    if (pathname === '/knowledge') return 'Knowledge Base';
-    if (pathname === '/company') return 'Company Overview';
-    if (pathname === '/my-dashboard') return 'My Dashboard';
-    return 'HelpDesk Pro';
-  };
-
-  const getDefaultRoute = () => {
-    if (currentUser.role === 'client') return '/company';
-    if (currentUser.role === 'subclient') return '/my-dashboard';
-    return '/dashboard';
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <Router>
-        <Routes>
-          <Route path="*" element={<LoginPage users={USERS} onLogin={handleLogin} />} />
-        </Routes>
-      </Router>
-    );
+function getDefaultRoute(role?: string) {
+  switch (role) {
+    case 'Client': return '/company';
+    case 'SubClient': return '/my-dashboard';
+    case 'Admin':
+    case 'Agent':
+    default: return '/dashboard';
   }
+}
+
+function LayoutWithTitle({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  return <AppLayout title={getPageTitle(location.pathname)}>{children}</AppLayout>;
+}
+
+function AppRoutes() {
+  const { user } = useAuth();
+
+  // Local-only timesheet state preserved (timesheet backend is a separate module out of scope).
+  const [timesheets, setTimesheets] = useState<Timesheet[]>([]);
+  const [projects] = useState<Project[]>([]);
+
+  const handleSaveTask = (task: TimesheetTask) => {
+    if (!user) return;
+    setTimesheets((prev) => {
+      const existing = prev.find((t) => t.userId === user.id);
+      if (existing) {
+        return prev.map((t) =>
+          t.userId === user.id
+            ? { ...t, tasks: [...t.tasks, task], totalHours: t.totalHours + task.hours }
+            : t
+        );
+      }
+      return [
+        ...prev,
+        {
+          id: `ts-${Date.now()}`,
+          userId: user.id,
+          month: new Date().getMonth() + 1,
+          year: new Date().getFullYear(),
+          tasks: [task],
+          status: 'draft',
+          totalHours: task.hours,
+        },
+      ];
+    });
+  };
+  const handleDeleteTask = (taskId: string) => {
+    if (!user) return;
+    setTimesheets((prev) =>
+      prev.map((t) => {
+        if (t.userId !== user.id) return t;
+        const removed = t.tasks.find((x) => x.id === taskId);
+        return {
+          ...t,
+          tasks: t.tasks.filter((x) => x.id !== taskId),
+          totalHours: t.totalHours - (removed?.hours ?? 0),
+        };
+      })
+    );
+  };
+  const handleSubmitTimesheet = () => {
+    if (!user) return;
+    setTimesheets((prev) => prev.map((t) => (t.userId === user.id && t.status === 'draft' ? { ...t, status: 'submitted' } : t)));
+  };
+  const handleValidate = (id: string) =>
+    setTimesheets((prev) => prev.map((t) => (t.id === id ? { ...t, status: 'validated', validatedBy: user?.id } : t)));
+  const handleReject = (id: string) =>
+    setTimesheets((prev) => prev.map((t) => (t.id === id ? { ...t, status: 'rejected' } : t)));
+
+  const legacyUser = user
+    ? {
+        id: user.id,
+        name: user.name ?? user.email,
+        email: user.email,
+        team: '',
+        role: (user.role.toLowerCase() === 'admin' ? 'Admin' : user.role.toLowerCase()) as
+          | 'Admin' | 'agent' | 'manager' | 'client' | 'subclient',
+        avatarInitials: user.avatarInitials ?? user.email.slice(0, 2).toUpperCase(),
+        avatarColor: 'bg-[#ef7c21]',
+      }
+    : null;
 
   return (
-    <Router>
-      <Routes>
-        <Route
-          path="/*"
-          element={
-            <AppLayout
-              currentUser={currentUser}
-              title={getPageTitle(window.location.pathname)}
-              onLogout={handleLogout}
-            >
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/*"
+        element={
+          <RequireAuth>
+            <LayoutWithTitle>
               <Routes>
-                <Route path="/" element={<Navigate to={getDefaultRoute()} replace />} />
-                <Route
-                  path="/dashboard"
-                  element={<Dashboard tickets={tickets} currentUser={currentUser} />}
-                />
-                <Route
-                  path="/tickets"
-                  element={
-                    <TicketsList
-                      currentUser={currentUser}
-                      mode="all"
-                    />
-                  }
-                />
-                <Route
-                  path="/my-tickets"
-                  element={
-                    <TicketsList
-                      currentUser={currentUser}
-                      mode="my-tickets"
-                    />
-                  }
-                />
-                <Route
-                  path="/tickets/:id"
-                  element={
-                    <TicketDetail
-                      currentUser={currentUser}
-                      onUpdateStatus={handleUpdateTicketStatus}
-                    />
-                  }
-                />
-                <Route
-                  path="/create-ticket"
-                  element={<CreateTicket onSubmit={handleCreateTicket} />}
-                />
-                <Route
-                  path="/company"
-                  element={
-                    <ClientDashboard
-                      tickets={getClientTickets()}
-                      currentUser={currentUser}
-                      subclients={getSubclients()}
-                      onCloseTicket={handleCloseTicketWithRating}
-                    />
-                  }
-                />
-                <Route
-                  path="/my-dashboard"
-                  element={
-                    <SubClientDashboard
-                      tickets={getSubclientTickets()}
-                      currentUser={currentUser}
-                    />
-                  }
-                />
-                <Route
-                  path="/company-tickets"
-                  element={
-                    <TicketsList
-                      currentUser={currentUser}
-                      mode="all"
-                    />
-                  }
-                />
+                <Route path="/" element={<Navigate to={getDefaultRoute(user?.role)} replace />} />
+                <Route path="/dashboard" element={<RequireAuth roles={['Admin', 'Agent']}><Dashboard /></RequireAuth>} />
+                <Route path="/tickets" element={user && <TicketsList currentUser={user} mode="all" />} />
+                <Route path="/my-tickets" element={user && <TicketsList currentUser={user} mode="my-tickets" />} />
+                <Route path="/tickets/:id" element={<TicketDetail />} />
+                <Route path="/create-ticket" element={<CreateTicket />} />
+                <Route path="/company" element={<RequireAuth roles={['Client']}><ClientDashboard /></RequireAuth>} />
+                <Route path="/my-dashboard" element={<RequireAuth roles={['SubClient']}><SubClientDashboard /></RequireAuth>} />
+                <Route path="/company-tickets" element={user && <TicketsList currentUser={user} mode="all" />} />
+                <Route path="/interventions" element={<InterventionsList />} />
+                <Route path="/interventions/:id" element={<InterventionDetail />} />
+                <Route path="/notifications" element={<NotificationsPage />} />
                 <Route
                   path="/timesheets"
                   element={
-                    <Timesheets
-                      currentUser={currentUser}
-                      timesheet={getCurrentUserTimesheet()}
-                      projects={PROJECTS}
-                      onSaveTask={handleSaveTask}
-                      onDeleteTask={handleDeleteTask}
-                      onSubmitTimesheet={handleSubmitTimesheet}
-                    />
+                    legacyUser ? (
+                      <Timesheets
+                        currentUser={legacyUser}
+                        timesheet={timesheets.find((t) => t.userId === legacyUser.id)}
+                        projects={projects}
+                        onSaveTask={handleSaveTask}
+                        onDeleteTask={handleDeleteTask}
+                        onSubmitTimesheet={handleSubmitTimesheet}
+                      />
+                    ) : null
                   }
                 />
                 <Route
                   path="/validation"
                   element={
-                    <TimesheetValidation
-                      timesheets={timesheets}
-                      users={USERS}
-                      onValidate={handleValidateTimesheet}
-                      onReject={handleRejectTimesheet}
-                    />
+                    <RequireAuth roles={['Admin']}>
+                      <TimesheetValidation
+                        timesheets={timesheets}
+                        users={legacyUser ? [legacyUser] : []}
+                        onValidate={handleValidate}
+                        onReject={handleReject}
+                      />
+                    </RequireAuth>
                   }
                 />
-                <Route
-                  path="/agents"
-                  element={
-                    <AllAgents
-                      agents={getAgents()}
-                      tickets={tickets}
-                    />
-                  }
-                />
-                <Route
-                  path="/agents/:id"
-                  element={
-                    <AgentDetail
-                      users={USERS}
-                      tickets={tickets}
-                    />
-                  }
-                />
-                <Route
-                  path="/clients"
-                  element={
-                    <AllClients
-                      clients={getClients()}
-                      tickets={tickets}
-                      agents={getAgents()}
-                    />
-                  }
-                />
-                <Route
-                  path="/clients/:id"
-                  element={
-                    <ClientDetail
-                      users={USERS}
-                      tickets={tickets}
-                    />
-                  }
-                />
-                <Route
-                  path="/knowledge"
-                  element={<Knowledge />}
-                />
-                <Route path="*" element={<Navigate to={getDefaultRoute()} replace />} />
+                <Route path="/agents" element={<RequireAuth roles={['Admin']}><AllAgents /></RequireAuth>} />
+                <Route path="/agents/:id" element={<RequireAuth roles={['Admin']}><AgentDetail /></RequireAuth>} />
+                <Route path="/clients" element={<RequireAuth roles={['Admin']}><AllClients /></RequireAuth>} />
+                <Route path="/clients/:id" element={<RequireAuth roles={['Admin']}><ClientDetail /></RequireAuth>} />
+                <Route path="/knowledge" element={<RequireAuth roles={['Admin', 'Agent']}><Knowledge /></RequireAuth>} />
+                <Route path="*" element={<Navigate to={getDefaultRoute(user?.role)} replace />} />
               </Routes>
-            </AppLayout>
-          }
-        />
-      </Routes>
-    </Router>
+            </LayoutWithTitle>
+          </RequireAuth>
+        }
+      />
+    </Routes>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <NotificationProvider>
+          <AppRoutes />
+        </NotificationProvider>
+      </AuthProvider>
+    </Router>
+  );
+}

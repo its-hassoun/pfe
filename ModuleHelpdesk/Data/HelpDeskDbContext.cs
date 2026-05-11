@@ -13,13 +13,14 @@ namespace ModuleHelpDesk.Data
 
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<Intervention> Interventions { get; set; }
+        public DbSet<InterventionExecution> InterventionExecutions { get; set; }
         public DbSet<TicketCollaborateur> TicketCollaborateurs { get; set; }
         public DbSet<MessageTicket> MessageTickets { get; set; }
         public DbSet<KnowledgeBase> KnowledgeBases { get; set; }
         public DbSet<KnowledgeSolution> KnowledgeSolutions { get; set; }
-
-
-
+        public DbSet<TicketHistory> TicketHistories { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<UserCredential> UserCredentials { get; set; }
 
         public DbSet<Agent> Agents { get; set; }
         public DbSet<Company> Companies { get; set; }
@@ -29,7 +30,6 @@ namespace ModuleHelpDesk.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Conversion JSON pour les listes d'URLs
             modelBuilder.Entity<Ticket>()
                 .Property(t => t.ImagesUrls)
                 .HasConversion(
@@ -44,7 +44,6 @@ namespace ModuleHelpDesk.Data
                     v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!) ?? new List<string>()
                 );
 
-            // Fix pour la relation Ticket <-> Message
             modelBuilder.Entity<MessageTicket>(entity =>
             {
                 entity.HasOne(m => m.Ticket)
@@ -53,18 +52,57 @@ namespace ModuleHelpDesk.Data
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Relation KnowledgeBase <-> Solution
             modelBuilder.Entity<KnowledgeSolution>()
                 .HasOne<KnowledgeBase>()
                 .WithMany(k => k.Solutions)
                 .HasForeignKey(s => s.KnowledgeBaseId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Agent>()
+                .Property(a => a.Id)
+                .ValueGeneratedNever();
 
-                modelBuilder.Entity<Agent>()
-        .Property(a => a.Id)
-        .ValueGeneratedNever();
+            // InterventionExecution
+            modelBuilder.Entity<InterventionExecution>(e =>
+            {
+                e.HasOne(x => x.Ticket)
+                    .WithMany()
+                    .HasForeignKey(x => x.TicketId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                e.HasOne(x => x.InterventionCatalog)
+                    .WithMany()
+                    .HasForeignKey(x => x.InterventionCatalogId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                e.HasIndex(x => x.AssignedAgentId);
+                e.HasIndex(x => x.ClientId);
+                e.HasIndex(x => x.Statut);
+            });
+
+            // TicketHistory
+            modelBuilder.Entity<TicketHistory>(e =>
+            {
+                e.HasOne(x => x.Ticket)
+                    .WithMany()
+                    .HasForeignKey(x => x.TicketId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                e.HasIndex(x => x.TicketId);
+                e.HasIndex(x => x.CreatedAt);
+            });
+
+            // Notification
+            modelBuilder.Entity<Notification>(e =>
+            {
+                e.HasIndex(x => new { x.RecipientUserId, x.IsRead, x.CreatedAt });
+            });
+
+            // UserCredential
+            modelBuilder.Entity<UserCredential>(e =>
+            {
+                e.HasIndex(x => x.Email).IsUnique();
+                e.HasIndex(x => x.UserId);
+            });
         }
-        
     }
 }

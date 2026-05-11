@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ModuleHelpDesk.Authorization;
 using ModuleHelpDesk.Models;
 using ModuleHelpDesk.Repositories;
 
 namespace ModuleHelpDesk.Controllers
 {
     [ApiController]
+    [Authorize(Roles = Roles.Staff)]
     [Route("api/helpdesk/[controller]")]
     public class KnowledgeController : ControllerBase
     {

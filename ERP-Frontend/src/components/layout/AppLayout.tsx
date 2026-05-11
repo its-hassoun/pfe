@@ -1,33 +1,29 @@
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Sidebar } from './Sidebar';
-import type { User } from '../../types';
-import { Menu, Bell, Search } from 'lucide-react';
+import { Menu, Search } from 'lucide-react';
+import { NotificationBell } from '../notifications/NotificationBell';
+import { NotificationToast } from '../notifications/NotificationToast';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface AppLayoutProps {
   children: ReactNode;
-  currentUser: User;
   title: string;
-  onLogout: () => void;
 }
 
-export function AppLayout({
-  children,
-  currentUser,
-  title,
-  onLogout
-}: AppLayoutProps) {
+export function AppLayout({ children, title }: AppLayoutProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { user, logout } = useAuth();
+  if (!user) return null;
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       <Sidebar
-        currentUser={currentUser}
+        currentUser={user}
         isMobileOpen={isMobileOpen}
-        onLogout={onLogout}
+        onLogout={logout}
       />
 
-      {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
@@ -36,7 +32,6 @@ export function AppLayout({
       )}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Header */}
         <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center">
             <button
@@ -57,18 +52,16 @@ export function AppLayout({
                 className="pl-9 pr-4 py-2 rounded-full bg-slate-100 border-none text-sm focus:ring-2 focus:ring-[#ef7c21] w-64"
               />
             </div>
-            <button className="relative p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
+            <NotificationBell />
           </div>
         </header>
 
-        {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>
+
+      <NotificationToast />
     </div>
   );
 }
