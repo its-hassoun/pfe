@@ -97,29 +97,48 @@ BEGIN
 END;
 GO
 
--- ── Optional: seed an admin user.
--- Replace the email and the BCrypt hash before running in production.
--- The hash below is a verified BCrypt hash (cost 11) for the password "Admin@1234".
+-- ── Demo credentials. Replace before deploying to production.
+-- Verified BCrypt (cost 11) hashes for the listed passwords.
+--
+--   admin@helpdesk.local     / Admin@1234
+--   agent@helpdesk.local     / Agent@1234
+--   client@helpdesk.local    / Client@1234
+--   subclient@helpdesk.local / SubClient@1234
+--
+-- Kind: 0 = Agent (staff), 1 = Contact (client/subclient)
+-- UserId is the principal identity used everywhere in the API (Ticket.ClientId,
+-- Ticket.AgentPrincipalId, Ticket.SousClientId, InterventionExecution.AssignedAgentId…).
+-- The values below are placeholders; replace them with real synced Agent.Id / Contact.Id
+-- values if you want role-scoped queries to find existing data.
+
+DECLARE @hashAdmin     NVARCHAR(200) = N'$2b$11$KnrR1dHOUkC6i8oFGYEvU.ByzaMkVPH.AXckydzOMrY2P3evMEsym';
+DECLARE @hashAgent     NVARCHAR(200) = N'$2b$11$BpuQrryF93I1.wPYa7dUJext5ATQQ4Z7AYb1V.kamwCxv80LQiUsC';
+DECLARE @hashClient    NVARCHAR(200) = N'$2b$11$fSzQ9b6zBzSaUS2grzz5YuT/mWJuKwngV8UAPhuXlEOcopG.JYGNG';
+DECLARE @hashSubClient NVARCHAR(200) = N'$2b$11$g8cZW2Ihc8gOFK.YyEkxduP9F1OUyiNaQWFrjFs/T9NB8ogFLesiq';
+
+-- Admin
 IF NOT EXISTS (SELECT 1 FROM [UserCredentials] WHERE [Email] = 'admin@helpdesk.local')
-BEGIN
     INSERT INTO [UserCredentials] ([UserId], [Email], [PasswordHash], [Role], [Kind], [IsActive])
-    VALUES (
-        N'admin-seed',
-        N'admin@helpdesk.local',
-        N'$2b$11$KnrR1dHOUkC6i8oFGYEvU.ByzaMkVPH.AXckydzOMrY2P3evMEsym',
-        N'Admin',
-        0,
-        1
-    );
-END
+    VALUES (N'admin-seed', N'admin@helpdesk.local', @hashAdmin, N'Admin', 0, 1);
 ELSE
-BEGIN
-    -- If the row was created by an earlier (broken) version of this script,
-    -- repair the hash so the seeded credentials actually work.
     UPDATE [UserCredentials]
-    SET [PasswordHash] = N'$2b$11$KnrR1dHOUkC6i8oFGYEvU.ByzaMkVPH.AXckydzOMrY2P3evMEsym',
+    SET [PasswordHash] = @hashAdmin,
         [UpdatedAt]    = SYSUTCDATETIME()
     WHERE [Email] = 'admin@helpdesk.local'
       AND [PasswordHash] = '$2a$11$E8w8nIWP4WlMpAYn2VgZF.WBCKHpAQqLqHCSyM4DxX1bgOABaGT9.';
-END;
+
+-- Agent
+IF NOT EXISTS (SELECT 1 FROM [UserCredentials] WHERE [Email] = 'agent@helpdesk.local')
+    INSERT INTO [UserCredentials] ([UserId], [Email], [PasswordHash], [Role], [Kind], [IsActive])
+    VALUES (N'demo-agent', N'agent@helpdesk.local', @hashAgent, N'Agent', 0, 1);
+
+-- Client
+IF NOT EXISTS (SELECT 1 FROM [UserCredentials] WHERE [Email] = 'client@helpdesk.local')
+    INSERT INTO [UserCredentials] ([UserId], [Email], [PasswordHash], [Role], [Kind], [IsActive])
+    VALUES (N'demo-client', N'client@helpdesk.local', @hashClient, N'Client', 1, 1);
+
+-- SubClient
+IF NOT EXISTS (SELECT 1 FROM [UserCredentials] WHERE [Email] = 'subclient@helpdesk.local')
+    INSERT INTO [UserCredentials] ([UserId], [Email], [PasswordHash], [Role], [Kind], [IsActive])
+    VALUES (N'demo-subclient', N'subclient@helpdesk.local', @hashSubClient, N'SubClient', 1, 1);
 GO
