@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import type { Timesheet, User } from '../types';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Avatar } from '../components/ui/Avatar';
+import type { Timesheet, User } from '../../types';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Avatar } from '../../components/ui/Avatar';
 import {
   Eye,
   X,

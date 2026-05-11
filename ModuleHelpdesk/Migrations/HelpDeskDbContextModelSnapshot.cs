@@ -22,6 +22,151 @@ namespace ModuleHelpdesk.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Agent", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AgentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("CoutHoraire")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Departement")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Poste")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Prenom")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("Rating")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("SyncedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Telephone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Agents", (string)null);
+                });
+
+            modelBuilder.Entity("Company", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Adresse")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CodePostal")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmailPrincipal")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MatriculeFiscal")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("MaxHeuresTraitementTicket")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Pays")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RaisonSociale")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Secteur")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Statut")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("SyncedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TelephonePrincipal")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Ville")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Companies", (string)null);
+                });
+
+            modelBuilder.Entity("Contact", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Poste")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Prenom")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("SyncedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Telephone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TelephoneCountry")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Contacts", (string)null);
+                });
+
             modelBuilder.Entity("ModuleHelpDesk.Models.Intervention", b =>
                 {
                     b.Property<int>("Id")
@@ -48,7 +193,7 @@ namespace ModuleHelpdesk.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Interventions");
+                    b.ToTable("Interventions", (string)null);
                 });
 
             modelBuilder.Entity("ModuleHelpDesk.Models.KnowledgeBase", b =>
@@ -76,7 +221,7 @@ namespace ModuleHelpdesk.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("KnowledgeBases");
+                    b.ToTable("KnowledgeBases", (string)null);
                 });
 
             modelBuilder.Entity("ModuleHelpDesk.Models.KnowledgeSolution", b =>
@@ -109,7 +254,7 @@ namespace ModuleHelpdesk.Migrations
 
                     b.HasIndex("KnowledgeBaseId");
 
-                    b.ToTable("KnowledgeSolutions");
+                    b.ToTable("KnowledgeSolutions", (string)null);
                 });
 
             modelBuilder.Entity("ModuleHelpDesk.Models.MessageTicket", b =>
@@ -141,7 +286,7 @@ namespace ModuleHelpdesk.Migrations
 
                     b.HasIndex("TicketId");
 
-                    b.ToTable("MessageTickets");
+                    b.ToTable("MessageTickets", (string)null);
                 });
 
             modelBuilder.Entity("ModuleHelpDesk.Models.Ticket", b =>
@@ -215,7 +360,7 @@ namespace ModuleHelpdesk.Migrations
 
                     b.HasIndex("InterventionId");
 
-                    b.ToTable("Tickets");
+                    b.ToTable("Tickets", (string)null);
                 });
 
             modelBuilder.Entity("ModuleHelpDesk.Models.TicketCollaborateur", b =>
@@ -237,7 +382,7 @@ namespace ModuleHelpdesk.Migrations
 
                     b.HasIndex("TicketId");
 
-                    b.ToTable("TicketCollaborateurs");
+                    b.ToTable("TicketCollaborateurs", (string)null);
                 });
 
             modelBuilder.Entity("ModuleHelpDesk.Models.KnowledgeSolution", b =>

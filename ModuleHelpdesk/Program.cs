@@ -2,26 +2,39 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using ModuleHelpDesk.Data;
 using ModuleHelpDesk.Repositories;
+using ModuleHelpdesk.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// --- 1. AJOUT DES SERVICES (AVANT le builder.Build) ---
 
 builder.Services.AddControllers(); 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configuration du DbContext
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "http://localhost:5173"
+              )
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 var connectionString = builder.Configuration.GetConnectionString("HelpDeskConnection");
 builder.Services.AddDbContext<HelpDeskDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// Injection de dépendance
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 
-// AJOUT DE MASSTRANSIT (Doit être ici !)
 builder.Services.AddMassTransit(x =>
 {
+    // Register your consumers
+    x.AddConsumer<AgentSyncConsumer>();
+    x.AddConsumer<CompanySyncConsumer>();
+
     x.UsingRabbitMq((ctx, cfg) =>
     {
         cfg.Host("51.254.133.231", 31672, "/", h =>
@@ -30,18 +43,20 @@ builder.Services.AddMassTransit(x =>
             h.Password("rabbitMQ-dev");
         });
 
-        // Configurer les queues à écouter
-        cfg.ReceiveEndpoint("nom.evenement", e =>
+        // Each consumer needs its own receive endpoint
+        cfg.ReceiveEndpoint("helpdesk-agent-sync", e =>
         {
-            // Tes consommateurs iront ici
+            e.ConfigureConsumer<AgentSyncConsumer>(ctx);
+        });
+
+        cfg.ReceiveEndpoint("helpdesk-company-sync", e =>
+        {
+            e.ConfigureConsumer<CompanySyncConsumer>(ctx);
         });
     });
 });
 
-// --- 2. CONSTRUCTION DE L'APPLICATION ---
 var app = builder.Build();
-
-// --- 3. CONFIGURATION DU PIPELINE (Middleware) ---
 
 if (app.Environment.IsDevelopment())
 {
@@ -49,10 +64,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// app.UseHttpsRedirection();
+// ─── Middleware order matters ──────────────────────────────────────────────────
+app.UseCors("AllowFrontend");   // must be before UseAuthorization
 app.UseAuthorization(); 
-
 app.MapControllers(); 
 
-// --- 4. LANCEMENT ---
 app.Run();

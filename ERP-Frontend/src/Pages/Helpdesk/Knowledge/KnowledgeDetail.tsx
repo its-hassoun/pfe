@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Card } from '../components/ui/Card';
-import type { Article, Solution } from '../types';
+import { Card } from '../../../components/ui/Card';
+import type { Article, Solution } from '../../../types';
 import {
   ArrowLeft,
   Calendar,

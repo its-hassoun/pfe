@@ -3,18 +3,18 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AppLayout } from './components/layout/AppLayout';
 import { LoginPage } from './Pages/LoginPage';
 import { Dashboard } from './Pages/Dashboard';
-import { TicketsList } from './Pages/TicketsList';
-import { TicketDetail } from './Pages/TicketDetail';
-import { CreateTicket } from './Pages/CreateTicket';
-import { Timesheets } from './Pages/Timesheets';
-import { TimesheetValidation } from './Pages/TimesheetValidation';
-import { AllAgents } from './Pages/AllAgents';
-import { AllClients } from './Pages/AllClients';
-import { AgentDetail } from './Pages/AgentDetail';
-import { ClientDetail } from './Pages/ClientDetail';
-import { Knowledge } from './Pages/Knowledge';
-import { ClientDashboard } from './Pages/ClientDashboard';
-import { SubClientDashboard } from './Pages/SubClientDashboard';
+import { TicketsList } from './Pages/Helpdesk/Ticket/TicketsList';
+import { TicketDetail } from './Pages/Helpdesk/Ticket/TicketDetail';
+import { CreateTicket } from './Pages/Helpdesk/Ticket/CreateTicket';
+import { Timesheets } from './Pages/Timesheets/Timesheets';
+import { TimesheetValidation } from './Pages/Timesheets/TimesheetValidation';
+import { AllAgents } from './Pages/Helpdesk/Ticket/AllAgents';
+import { AllClients } from './Pages/Helpdesk/Ticket/AllClients';
+import { AgentDetail } from './Pages/Helpdesk/Ticket/AgentDetail';
+import { ClientDetail } from './Pages/Helpdesk/Ticket/ClientDetail';
+import { Knowledge } from './Pages/Helpdesk/Knowledge/Knowledge';
+import { ClientDashboard } from './Pages/Helpdesk/Ticket/ClientDashboard';
+import { SubClientDashboard } from './Pages/Helpdesk/Ticket/SubClientDashboard';
 import { USERS, TICKETS, TIMESHEETS, PROJECTS } from './data/mockData';
 import type { Ticket, User, TicketStatus, TimesheetTask, Timesheet } from './types';
 
@@ -228,7 +228,6 @@ function App() {
                   path="/tickets"
                   element={
                     <TicketsList
-                      tickets={tickets}
                       currentUser={currentUser}
                       mode="all"
                     />
@@ -238,7 +237,6 @@ function App() {
                   path="/my-tickets"
                   element={
                     <TicketsList
-                      tickets={tickets}
                       currentUser={currentUser}
                       mode="my-tickets"
                     />
@@ -248,7 +246,6 @@ function App() {
                   path="/tickets/:id"
                   element={
                     <TicketDetail
-                      tickets={tickets}
                       currentUser={currentUser}
                       onUpdateStatus={handleUpdateTicketStatus}
                     />
@@ -282,7 +279,6 @@ function App() {
                   path="/company-tickets"
                   element={
                     <TicketsList
-                      tickets={getClientTickets()}
                       currentUser={currentUser}
                       mode="all"
                     />

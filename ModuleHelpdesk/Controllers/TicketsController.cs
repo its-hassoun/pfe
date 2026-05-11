@@ -6,7 +6,7 @@ using MassTransit; // Nécessaire pour la notification inter-modules
 namespace ModuleHelpDesk.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/helpdesk/[controller]")]
     public class TicketsController : ControllerBase
     {
         private readonly ITicketRepository _repo;

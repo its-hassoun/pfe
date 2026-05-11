@@ -18,6 +18,7 @@ namespace ITANIS.SharedEvents
         public string? Pays { get; set; }
         public string? MatriculeFiscal { get; set; }
         public string? Statut { get; set; }
+        public decimal? MaxHeuresTraitementTicket { get; set; }
         public DateTime ChangedAt { get; set; } = DateTime.UtcNow;
     }
 }

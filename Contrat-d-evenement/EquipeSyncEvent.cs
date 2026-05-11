@@ -39,6 +39,12 @@ namespace ITANIS.SharedEvents
     public class EquipeMembreSyncDto
     {
         public int CollaborateurIdOrigine { get; set; }
+        /// <summary>
+        /// "interne" ou "externe". Optionnel : si vide, la RH déduit le type en
+        /// cherchant l'Id dans CollaborateursInternes puis CollaborateursExternes.
+        /// Renseigné par la RH quand elle publie ; Nesrine n'a pas besoin de le remplir.
+        /// </summary>
+        public string CollaborateurType { get; set; } = string.Empty;
         public string RoleDansEquipe { get; set; } = "Agent";
         public DateTime DateAffectation { get; set; } = DateTime.UtcNow;
     }

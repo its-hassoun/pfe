@@ -9,7 +9,7 @@ namespace ITANIS.SharedEvents
         public int OpportunityId { get; set; }
         public string Titre { get; set; } = string.Empty;
         public string? Description { get; set; }
-        // IDs CRM envoyés comme référence d'origine (à stocker côté Nesrine dans des colonnes *IdOrigine*, pas comme PK).
+        // IDs CRM envoyés comme référence d'origine (à stocker dans des colonnes *IdOrigine*, pas comme PK).
         public int CompanyIdOrigine { get; set; }
         public string CompanyName { get; set; } = string.Empty;
         public decimal ValeurEstimee { get; set; }
@@ -22,6 +22,9 @@ namespace ITANIS.SharedEvents
 
         // Cahier de charge
         public string? CdcFilePath { get; set; }
+        public string? CdcFileName { get; set; }
+        public string? CdcContentType { get; set; }
+        public byte[]? CdcFileContent { get; set; }
 
         // Champs saisis dans le formulaire de conversion (prioritaires sur les champs de l'opportunité si présents)
         public string? NomProjet { get; set; }

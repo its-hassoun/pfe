@@ -18,6 +18,7 @@ namespace ITANIS.SharedEvents
         public bool IsActive { get; set; } = true;
         public string? AgentType { get; set; }
         public decimal? CoutHoraire { get; set; }
+        public decimal? Rating { get; set; }
         public DateTime ChangedAt { get; set; } = DateTime.UtcNow;
     }
 }

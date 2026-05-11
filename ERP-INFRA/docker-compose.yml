@@ -1,7 +1,6 @@
 version: "3.9"
 
 services:
-
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sqlserver
@@ -45,7 +44,7 @@ services:
   
   helpdesk-timesheet-api:
     build: ../ModuleHelpDesk-Timesheet 
-    image: helpdesktimesheet-service #the image name
+    image: helpdesktimesheet-service
     ports:
       - "5004:8080"
     environment:
@@ -57,26 +56,29 @@ services:
     build: ../ModuleBI
     image: bi-service
     ports:
-      - "5005:8080" # 5005 sur le PC → 8080 dans le container
+      - "5005:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-    depends_on: #This means: Docker starts SQL Server first then the services
+    depends_on:
       - sqlserver 
       
   helpdesk-api:
-    build: ../ModuleHelpdesk
+    build:
+      context: ..
+      dockerfile: ./ModuleHelpdesk/Dockerfile
     image: helpdesk-service
     ports:
-      - "5006:8080" # 5005 sur le PC → 8080 dans le container
+      - "5006:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-    depends_on: #This means: Docker starts SQL Server first then the services
-      - sqlserver 
+    depends_on:
+      - sqlserver
 
   erp-frontend:
     build: ../ERP-Frontend
     image: erp-frontend
     ports:
-      - "3000:5173" # 5001 sur ton PC → 8080 dans le container
+      - "3000:5173"
+
 volumes: 
   sql_data:

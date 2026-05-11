@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
-import type { Timesheet, TimesheetTask, User, Project } from '../types';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
+import type { Timesheet, TimesheetTask, User, Project } from '../../types';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import {
   ChevronLeft,
   ChevronRight,

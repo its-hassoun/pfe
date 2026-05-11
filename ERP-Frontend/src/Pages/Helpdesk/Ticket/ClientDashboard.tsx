@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '../components/ui/Card';
-import { StatusBadge } from '../components/ui/StatusBadge';
-import { Button } from '../components/ui/Button';
-import type { Ticket, User } from '../types';
+import { Card } from '../../../components/ui/Card';
+import { StatusBadge } from '../../../components/ui/StatusBadge';
+import { Button } from '../../../components/ui/Button';
+import type { Ticket, User } from '../../../types';
 import {
   Ticket as TicketIcon,
   Clock,

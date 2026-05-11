@@ -1,23 +1,17 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
-import type { TicketPriority } from '../types';
+import { Card } from '../../../components/ui/Card';
+import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
+import { Select } from '../../../components/ui/Select';
+import type { TicketPriority } from '../../../types';
+import type { Intervention } from '../../../types/helpdesk';
+import { interventionService } from '../../../Services/helpdesk/interventionService';
 import { ArrowLeft, Upload, X, File } from 'lucide-react';
 
 const CLIENTS_DATA = [
   { id: 'c1', name: 'Groupe Renault', subClients: ['Usine Flins', 'Siège Boulogne', 'Logistique'] },
   { id: 'c2', name: 'TotalEnergies', subClients: ['Raffinage France', 'Secteur IT', 'Plateforme Mer'] }
-];
-
-const COMMON_ISSUES = [
-  { value: 'vpn_access', label: 'Problème Accès VPN' },
-  { value: 'password_reset', label: 'Réinitialisation de mot de passe' },
-  { value: 'hardware_fault', label: 'Panne Matérielle (PC/Écran)' },
-  { value: 'email_issue', label: 'Problème Outlook / Messagerie' },
-  { value: 'other', label: 'Autre... (Saisir manuellement)' }
 ];
 
 interface CreateTicketProps {
@@ -26,10 +20,11 @@ interface CreateTicketProps {
 
 export function CreateTicket({ onSubmit }: CreateTicketProps) {
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     clientName: '',
     subClient: '',
-    title: '',
+    interventionId: '',
     customTitle: '',
     priority: 'medium' as TicketPriority,
     team: 'helpdesk' as string,
@@ -39,10 +34,23 @@ export function CreateTicket({ onSubmit }: CreateTicketProps) {
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [interventions, setInterventions] = useState<Intervention[]>([]);
+  const [loadingInterventions, setLoadingInterventions] = useState(true);
+  const [interventionError, setInterventionError] = useState(false);
+
+  useEffect(() => {
+    interventionService.getAll()
+      .then((data) => setInterventions(data))
+      .catch(() => setInterventionError(true))
+      .finally(() => setLoadingInterventions(false));
+  }, []);
+
   const selectedClientData = CLIENTS_DATA.find((c) => c.name === formData.clientName);
   const subClientOptions = selectedClientData
     ? selectedClientData.subClients.map((sc) => ({ value: sc, label: sc }))
     : [];
+
+  const isCustom = formData.interventionId === 'other';
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) setFiles([...files, ...Array.from(e.target.files)]);
@@ -52,12 +60,37 @@ export function CreateTicket({ onSubmit }: CreateTicketProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalTitle = formData.title === 'other'
-      ? formData.customTitle
-      : COMMON_ISSUES.find((i) => i.value === formData.title)?.label || formData.title;
 
-    onSubmit({ ...formData, title: finalTitle, attachments: files });
+    const selectedIntervention = interventions.find(
+      (i) => String(i.id) === formData.interventionId
+    );
+
+    const finalTitle = isCustom
+      ? formData.customTitle
+      : selectedIntervention?.nom || '';
+
+    onSubmit({
+      ...formData,
+      interventionId: isCustom ? null : Number(formData.interventionId),
+      title: finalTitle,
+      attachments: files,
+    });
+
     navigate('/tickets');
+  };
+
+  const interventionOptions = () => {
+    if (loadingInterventions) {
+      return [{ value: '', label: 'Chargement des interventions...' }];
+    }
+    if (interventionError) {
+      return [{ value: '', label: 'Erreur de chargement — réessayez' }];
+    }
+    return [
+      { value: '', label: 'Sélectionner une intervention...' },
+      ...interventions.map((i) => ({ value: String(i.id), label: i.nom })),
+      { value: 'other', label: 'Autre... (Saisir manuellement)' },
+    ];
   };
 
   return (
@@ -80,12 +113,14 @@ export function CreateTicket({ onSubmit }: CreateTicketProps) {
 
       <Card className="border-none shadow-2xl rounded-[2.5rem] p-8 md:p-10 bg-white">
         <form onSubmit={handleSubmit} className="space-y-8">
+
+          {/* Client & Sous-client */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
             <Select
               label="Client Principal"
               required
               options={[
-                { value: '', label: 'Select a client...' },
+                { value: '', label: 'Sélectionner un client...' },
                 ...CLIENTS_DATA.map((c) => ({ value: c.name, label: c.name }))
               ]}
               value={formData.clientName}
@@ -98,7 +133,7 @@ export function CreateTicket({ onSubmit }: CreateTicketProps) {
               required
               disabled={!formData.clientName}
               options={[
-                { value: '', label: 'Select a sub-client...' },
+                { value: '', label: 'Sélectionner un sous-client...' },
                 ...subClientOptions
               ]}
               value={formData.subClient}
@@ -106,14 +141,18 @@ export function CreateTicket({ onSubmit }: CreateTicketProps) {
             />
           </div>
 
+          {/* Intervention & Priorité */}
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Select
-                label="Objet du ticket (Type)"
+                label="Objet du ticket (Intervention)"
                 required
-                options={[{ value: '', label: 'Select an issue...' }, ...COMMON_ISSUES]}
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                disabled={loadingInterventions || interventionError}
+                options={interventionOptions()}
+                value={formData.interventionId}
+                onChange={(e) =>
+                  setFormData({ ...formData, interventionId: e.target.value, customTitle: '' })
+                }
               />
               <Select
                 label="Priorité"
@@ -130,20 +169,44 @@ export function CreateTicket({ onSubmit }: CreateTicketProps) {
               />
             </div>
 
-            {formData.title === 'other' && (
-              <div>
-                <Input
-                  label="Précisez l'objet du ticket"
-                  placeholder="Saisissez l'objet manuellement..."
-                  required
-                  value={formData.customTitle}
-                  onChange={(e) => setFormData({ ...formData, customTitle: e.target.value })}
-                  className="border-[#ef7c21] bg-orange-50/30"
-                />
-              </div>
+            {/* Custom title if "Autre" selected */}
+            {isCustom && (
+              <Input
+                label="Précisez l'objet du ticket"
+                placeholder="Saisissez l'objet manuellement..."
+                required
+                value={formData.customTitle}
+                onChange={(e) => setFormData({ ...formData, customTitle: e.target.value })}
+                className="border-[#ef7c21] bg-orange-50/30"
+              />
             )}
+
+            {/* Show intervention details if one is selected */}
+            {formData.interventionId && !isCustom && (() => {
+              const selected = interventions.find(i => String(i.id) === formData.interventionId);
+              if (!selected) return null;
+              return (
+                <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex gap-6 text-sm">
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Durée estimée</p>
+                    <p className="font-bold text-slate-700">{selected.dureeEstimeeMinutes} min</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prix forfaitaire</p>
+                    <p className="font-bold text-slate-700">{selected.prixForfaitaire} €</p>
+                  </div>
+                  {selected.description && (
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</p>
+                      <p className="font-medium text-slate-600">{selected.description}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
+          {/* Équipe */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Select
               label="Équipe assignée"
@@ -158,6 +221,7 @@ export function CreateTicket({ onSubmit }: CreateTicketProps) {
             />
           </div>
 
+          {/* Description */}
           <div>
             <label className="block text-sm font-black text-slate-700 mb-2 uppercase tracking-widest opacity-70">
               Description
@@ -171,6 +235,7 @@ export function CreateTicket({ onSubmit }: CreateTicketProps) {
             />
           </div>
 
+          {/* Pièces jointes */}
           <div className="space-y-4">
             <label className="block text-sm font-black text-slate-700 uppercase tracking-widest opacity-70">
               Pièces jointes
@@ -207,10 +272,7 @@ export function CreateTicket({ onSubmit }: CreateTicketProps) {
                     </div>
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeFile(index);
-                      }}
+                      onClick={(e) => { e.stopPropagation(); removeFile(index); }}
                       className="p-1 text-slate-300 hover:text-red-500"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -221,6 +283,7 @@ export function CreateTicket({ onSubmit }: CreateTicketProps) {
             )}
           </div>
 
+          {/* Actions */}
           <div className="flex justify-end space-x-4 pt-6 border-t border-slate-100">
             <Button
               type="button"

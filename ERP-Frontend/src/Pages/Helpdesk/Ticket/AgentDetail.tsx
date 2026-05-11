@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import type { User, Ticket } from '../types';
-import { Card } from '../components/ui/Card';
-import { Avatar } from '../components/ui/Avatar';
+import type { User, Ticket } from '../../../types';
+import { Card } from '../../../components/ui/Card';
+import { Avatar } from '../../../components/ui/Avatar';
 import {
   ChevronLeft,
   Clock,

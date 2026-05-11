@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Card } from '../components/ui/Card';
+import { Card } from '../../../components/ui/Card';
 import { KnowledgeDetail } from './KnowledgeDetail';
-import type { Article } from '../types';
+import type { Article } from '../../../types';
 import {
   BookOpen,
   Layers,

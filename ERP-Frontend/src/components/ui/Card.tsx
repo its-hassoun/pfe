@@ -1,25 +1,16 @@
 import React from 'react';
-
-interface CardProps {
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
   noPadding?: boolean;
-  onClick?: () => void;
 }
-
 export function Card({
   children,
   className = '',
   noPadding = false,
-  onClick
+  ...props
 }: CardProps) {
-  return (
-    <div
-      onClick={onClick}
-      className={`bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden ${className}
-      ${onClick ? 'cursor-pointer' : ''}`}
-    >
-      <div className={noPadding ? '' : 'p-6'}>{children}</div>
-    </div>
-  );
+  return <div className={`bg-white border border-gray-200 rounded-lg ${noPadding ? '' : 'p-6'} ${className}`} {...props}>
+      {children}
+    </div>;
 }
