@@ -99,17 +99,27 @@ GO
 
 -- ── Optional: seed an admin user.
 -- Replace the email and the BCrypt hash before running in production.
--- The hash below is for the password "Admin@1234" (bcrypt cost 11):
+-- The hash below is a verified BCrypt hash (cost 11) for the password "Admin@1234".
 IF NOT EXISTS (SELECT 1 FROM [UserCredentials] WHERE [Email] = 'admin@helpdesk.local')
 BEGIN
     INSERT INTO [UserCredentials] ([UserId], [Email], [PasswordHash], [Role], [Kind], [IsActive])
     VALUES (
         N'admin-seed',
         N'admin@helpdesk.local',
-        N'$2a$11$E8w8nIWP4WlMpAYn2VgZF.WBCKHpAQqLqHCSyM4DxX1bgOABaGT9.',
+        N'$2b$11$KnrR1dHOUkC6i8oFGYEvU.ByzaMkVPH.AXckydzOMrY2P3evMEsym',
         N'Admin',
         0,
         1
     );
+END
+ELSE
+BEGIN
+    -- If the row was created by an earlier (broken) version of this script,
+    -- repair the hash so the seeded credentials actually work.
+    UPDATE [UserCredentials]
+    SET [PasswordHash] = N'$2b$11$KnrR1dHOUkC6i8oFGYEvU.ByzaMkVPH.AXckydzOMrY2P3evMEsym',
+        [UpdatedAt]    = SYSUTCDATETIME()
+    WHERE [Email] = 'admin@helpdesk.local'
+      AND [PasswordHash] = '$2a$11$E8w8nIWP4WlMpAYn2VgZF.WBCKHpAQqLqHCSyM4DxX1bgOABaGT9.';
 END;
 GO
